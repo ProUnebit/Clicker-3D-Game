@@ -5,12 +5,12 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
-import { HorizontalBlurShader } from 'three/addons/shaders/HorizontalBlurShader.js';
-import { VerticalBlurShader } from 'three/addons/shaders/VerticalBlurShader.js';
+import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader.js';
+import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader.js';
 
 // Set up the scene, camera, and renderer
 const scene = new THREE.Scene();
@@ -20,7 +20,7 @@ camera.position.set(25, 0, 0); // Initial position of the camera
 const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.setClearColor(0x2c1238, 1); // Set the background color to a slightly lighter purple
+renderer.setClearColor(0x050005, 1);
 
 // Set initial opacity for the fade-in effect
 renderer.domElement.style.opacity = 0;
@@ -46,13 +46,13 @@ composer.addPass(fxaaPass);
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
 composer.addPass(bloomPass);
 
-// Add horizontal and vertical blur passes for lightning with a subtle intensity
+// Add horizontal and vertical blur passes for lightning
 const horizontalBlurPass = new ShaderPass(HorizontalBlurShader);
-horizontalBlurPass.uniforms['h'].value = 0.003 / window.innerWidth; // Subtle blur intensity
+horizontalBlurPass.uniforms['h'].value = 1 / window.innerWidth;
 composer.addPass(horizontalBlurPass);
 
 const verticalBlurPass = new ShaderPass(VerticalBlurShader);
-verticalBlurPass.uniforms['v'].value = 0.003 / window.innerHeight; // Subtle blur intensity
+verticalBlurPass.uniforms['v'].value = 1 / window.innerHeight;
 composer.addPass(verticalBlurPass);
 
 // Lighting and environment setup
