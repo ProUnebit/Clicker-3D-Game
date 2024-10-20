@@ -20,6 +20,9 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.setClearColor(0x050005, 1); // Set the background color to an even darker purple
 
+// Set initial opacity for the fade-in effect
+renderer.domElement.style.opacity = 0;
+
 // Set up OrbitControls for mouse interaction with the camera
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -33,7 +36,7 @@ const composer = new EffectComposer(renderer);
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
-const fxaaPass = new ShaderPass(FXAAShher);
+const fxaaPass = new ShaderPass(FXAAShader);
 const pixelRatio = renderer.getPixelRatio();
 fxaaPass.material.uniforms['resolution'].value.set(1 / (window.innerWidth * pixelRatio), 1 / (window.innerHeight * pixelRatio));
 composer.addPass(fxaaPass);
@@ -105,9 +108,18 @@ function animate() {
     animateLightning(lightningGroup, scene);
     handleTriangleCollisions(triangles);
 
+    // Gradually increase the opacity for the fade-in effect over 3 seconds (3000 ms)
+    const elapsedTime = clock.getElapsedTime();
+    if (elapsedTime < 3) {
+        const opacity = elapsedTime / 3; // Calculate opacity as a fraction of 3 seconds
+        renderer.domElement.style.opacity = opacity;
+    }
+
     composer.render();
 }
 
+// Create a clock to track time for the fade-in effect
+const clock = new THREE.Clock();
 animate();
 
 // Mouse interaction for triangles
@@ -128,20 +140,15 @@ window.addEventListener('pointermove', (event) => {
             const force = new THREE.Vector3().subVectors(triangle.position, raycaster.ray.origin).normalize().multiplyScalar(0.05);
             triangle.position.add(force);
 
-            // Save original geometry and transform to a sphere
-            const originalGeometry = triangle.geometry;
-            triangle.geometry = new THREE.SphereGeometry(0.5, 16, 16);
-
             // Flash the triangle white for a short duration
             const originalEmissive = triangle.material.emissive.clone();
             triangle.material.emissive.set(0xffffff);
             triangle.material.emissiveIntensity = 0.5;
 
             setTimeout(() => {
-                triangle.geometry = originalGeometry; // Revert back to the original geometry (triangle)
                 triangle.material.emissive.copy(originalEmissive);
                 triangle.material.emissiveIntensity = 0.0;
-            }, 50); // Duration of 50ms for the sphere transformation
+            }, 100); // Flash duration of 100ms
         });
     }
 });

@@ -7,7 +7,7 @@ export function initFireflies(scene) {
     ];
 
     const fireflies = [];
-    for (let i = 0; i < 60; i++) { // Increased the number of fireflies to 60
+    for (let i = 0; i < 120; i++) { // Increased the number of fireflies to 120
         const geometry = new THREE.SphereGeometry(0.15, 16, 16);
         const color = colors[Math.floor(Math.random() * colors.length)];
         const material = new THREE.MeshPhysicalMaterial({

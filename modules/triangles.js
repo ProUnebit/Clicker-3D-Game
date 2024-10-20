@@ -3,7 +3,7 @@ import * as THREE from 'three';
 export function initTriangles(scene) {
     const colors = [
         0x8a2be2, 0xff69b4, 0xff0000, 0xffff00,
-        0xffa500, 0x00ff00, 0x0000ff, 0xf5f5f5
+        0xffa500, 0x00dd20, 0x0000ff, 0xf5f5f5
     ];
 
     const triangles = [];
