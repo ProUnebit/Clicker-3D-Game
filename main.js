@@ -89,6 +89,13 @@ let score = 0;
 let scoreTextMesh;
 let font;
 
+let streak = 0;
+let multiplier = 1;
+let lastHitTime = 0;
+const comboWindowMs = 2500;
+
+const bonusOrbs = [];
+
 const fontLoader = new FontLoader();
 fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', (loadedFont) => {
     font = loadedFont;
@@ -131,6 +138,7 @@ function animate() {
     requestAnimationFrame(animate);
 
     controls.update();
+    decayComboIfIdle();
 
     // Gradually increase the opacity for the fade-in effect over 3 seconds (3000 ms)
     const elapsedTime = clock.getElapsedTime();
@@ -153,6 +161,7 @@ function animate() {
 
     animateFireflies(fireflies);
     animateTriangles(triangles);
+    animateBonusOrbs();
     animateLightning(lightningGroup, scene);
     handleTriangleCollisions(triangles);
 
@@ -200,7 +209,6 @@ window.addEventListener('pointermove', (event) => {
 
 window.addEventListener('pointerdown', (event) => {
     setPointerFromEvent(event);
-
     const intersects = raycaster.intersectObjects(triangles);
 
     if (intersects.length > 0) {
@@ -210,11 +218,9 @@ window.addEventListener('pointerdown', (event) => {
         updateScoreOverlay();
 
         triangle.scale.multiplyScalar(1.1);
-        triangle.material.emissiveIntensity = 0.6;
         setTimeout(() => {
             triangle.scale.multiplyScalar(1 / 1.1);
-            triangle.material.emissiveIntensity = 0.0;
-        }, 140);
+        }, 120);
 
         if (instructionsEl) {
             instructionsEl.classList.add('acknowledged');
