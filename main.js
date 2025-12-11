@@ -9,6 +9,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { HorizontalBlurShader } from 'three/addons/shaders/HorizontalBlurShader.js';
 import { VerticalBlurShader } from 'three/addons/shaders/VerticalBlurShader.js';
 
@@ -75,6 +76,14 @@ const triangles = initTriangles(scene);
 const lightningGroup = new THREE.Group();
 scene.add(lightningGroup);
 
+// Shared DOM helpers
+const scoreValueEl = document.getElementById('score-value');
+const instructionsEl = document.getElementById('instructions');
+
+// Shared raycasting utilities
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
 // Score setup
 let score = 0;
 let scoreTextMesh;
@@ -84,12 +93,13 @@ const fontLoader = new FontLoader();
 fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', (loadedFont) => {
     font = loadedFont;
     createScoreText();
+    updateScoreOverlay();
 });
 
 function createScoreText() {
     if (!font) return;
 
-    const geometry = new THREE.TextGeometry(`Score: ${score}`, {
+    const geometry = new TextGeometry(`Счёт: ${score}`, {
         font: font,
         size: 0.5,
         height: 0.05,
@@ -106,6 +116,12 @@ function updateScoreText() {
         scene.remove(scoreTextMesh);
     }
     createScoreText();
+}
+
+function updateScoreOverlay() {
+    if (scoreValueEl) {
+        scoreValueEl.textContent = score;
+    }
 }
 
 // Big Bang Effect (Scaling objects rapidly)
@@ -147,14 +163,15 @@ function animate() {
 const clock = new THREE.Clock();
 animate();
 
+function setPointerFromEvent(event) {
+    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+}
+
 // Mouse interaction for triangles
 window.addEventListener('pointermove', (event) => {
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    raycaster.setFromCamera(mouse, camera);
+    setPointerFromEvent(event);
     const intersects = raycaster.intersectObjects(triangles);
 
     if (intersects.length > 0) {
@@ -162,7 +179,10 @@ window.addEventListener('pointermove', (event) => {
             const triangle = intersect.object;
 
             // Apply a small force away from the cursor
-            const force = new THREE.Vector3().subVectors(triangle.position, raycaster.ray.origin).normalize().multiplyScalar(0.05);
+            const force = new THREE.Vector3()
+                .subVectors(triangle.position, raycaster.ray.origin)
+                .normalize()
+                .multiplyScalar(0.05);
             triangle.position.add(force);
 
             // Flash the triangle white for a short duration
@@ -175,5 +195,27 @@ window.addEventListener('pointermove', (event) => {
                 triangle.material.emissiveIntensity = 0.0;
             }, 100);
         });
+    }
+});
+
+window.addEventListener('pointerdown', (event) => {
+    setPointerFromEvent(event);
+    const intersects = raycaster.intersectObjects(triangles);
+
+    if (intersects.length > 0) {
+        const triangle = intersects[0].object;
+        score += 1;
+        updateScoreText();
+        updateScoreOverlay();
+
+        triangle.scale.multiplyScalar(1.1);
+        setTimeout(() => {
+            triangle.scale.multiplyScalar(1 / 1.1);
+        }, 120);
+
+        if (instructionsEl) {
+            instructionsEl.classList.add('acknowledged');
+            setTimeout(() => instructionsEl.classList.remove('acknowledged'), 400);
+        }
     }
 });
