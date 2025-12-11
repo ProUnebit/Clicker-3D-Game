@@ -99,7 +99,7 @@ fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.
 function createScoreText() {
     if (!font) return;
 
-    const geometry = new TextGeometry(`Счёт: ${score}`, {
+    const geometry = new TextGeometry(`SCORE: ${score}`, {
         font: font,
         size: 0.5,
         height: 0.05,
