@@ -9,6 +9,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import { HorizontalBlurShader } from 'three/addons/shaders/HorizontalBlurShader.js';
 import { VerticalBlurShader } from 'three/addons/shaders/VerticalBlurShader.js';
 
@@ -75,21 +76,45 @@ const triangles = initTriangles(scene);
 const lightningGroup = new THREE.Group();
 scene.add(lightningGroup);
 
+spawnBonusOrb();
+setInterval(() => {
+    if (bonusOrbs.length < 3) {
+        spawnBonusOrb();
+    }
+}, 5000);
+
+// Shared DOM helpers
+const scoreValueEl = document.getElementById('score-value');
+const instructionsEl = document.getElementById('instructions');
+const comboValueEl = document.getElementById('combo-value');
+
+// Shared raycasting utilities
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
 // Score setup
 let score = 0;
 let scoreTextMesh;
 let font;
 
+let streak = 0;
+let multiplier = 1;
+let lastHitTime = 0;
+const comboWindowMs = 2500;
+
+const bonusOrbs = [];
+
 const fontLoader = new FontLoader();
 fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', (loadedFont) => {
     font = loadedFont;
     createScoreText();
+    updateScoreOverlay();
 });
 
 function createScoreText() {
     if (!font) return;
 
-    const geometry = new THREE.TextGeometry(`Score: ${score}`, {
+    const geometry = new TextGeometry(`Счёт: ${score}`, {
         font: font,
         size: 0.5,
         height: 0.05,
@@ -106,6 +131,83 @@ function updateScoreText() {
         scene.remove(scoreTextMesh);
     }
     createScoreText();
+}
+
+function updateScoreOverlay() {
+    if (scoreValueEl) {
+        scoreValueEl.textContent = score;
+    }
+}
+
+function updateComboOverlay() {
+    if (comboValueEl) {
+        comboValueEl.textContent = `x${multiplier.toFixed(2).replace(/\.00$/, '.0').replace(/\.0$/, '')}`;
+    }
+}
+
+function updateComboState() {
+    const now = performance.now();
+    if (now - lastHitTime <= comboWindowMs) {
+        streak += 1;
+    } else {
+        streak = 1;
+    }
+    lastHitTime = now;
+
+    multiplier = Math.min(1 + (streak - 1) * 0.25, 3);
+    updateComboOverlay();
+}
+
+function spawnBonusOrb() {
+    const geometry = new THREE.SphereGeometry(0.6, 24, 24);
+    const color = new THREE.Color(0x7efbff);
+    const material = new THREE.MeshPhysicalMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.9,
+        metalness: 0.1,
+        roughness: 0.2,
+        transparent: true,
+        transmission: 0.8,
+        opacity: 0.9,
+        clearcoat: 0.8,
+    });
+
+    const orb = new THREE.Mesh(geometry, material);
+    orb.position.set(
+        (Math.random() - 0.5) * 12,
+        (Math.random() - 0.5) * 12,
+        (Math.random() - 0.5) * 12,
+    );
+    orb.userData = {
+        velocity: new THREE.Vector3((Math.random() - 0.5) * 0.03, (Math.random() - 0.5) * 0.03, (Math.random() - 0.5) * 0.03),
+        pulse: Math.random() * 0.005 + 0.002,
+        pulseDirection: 1,
+    };
+
+    scene.add(orb);
+    bonusOrbs.push(orb);
+}
+
+function animateBonusOrbs() {
+    const bounds = 14;
+
+    bonusOrbs.forEach((orb) => {
+        orb.position.add(orb.userData.velocity);
+        orb.material.emissiveIntensity = THREE.MathUtils.clamp(
+            orb.material.emissiveIntensity + orb.userData.pulse * orb.userData.pulseDirection,
+            0.4,
+            1.2,
+        );
+
+        if (orb.material.emissiveIntensity === 1.2 || orb.material.emissiveIntensity === 0.4) {
+            orb.userData.pulseDirection *= -1;
+        }
+
+        if (Math.abs(orb.position.x) > bounds) orb.userData.velocity.x = -orb.userData.velocity.x;
+        if (Math.abs(orb.position.y) > bounds) orb.userData.velocity.y = -orb.userData.velocity.y;
+        if (Math.abs(orb.position.z) > bounds) orb.userData.velocity.z = -orb.userData.velocity.z;
+    });
 }
 
 // Big Bang Effect (Scaling objects rapidly)
@@ -137,6 +239,7 @@ function animate() {
 
     animateFireflies(fireflies);
     animateTriangles(triangles);
+    animateBonusOrbs();
     animateLightning(lightningGroup, scene);
     handleTriangleCollisions(triangles);
 
@@ -147,14 +250,15 @@ function animate() {
 const clock = new THREE.Clock();
 animate();
 
+function setPointerFromEvent(event) {
+    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+}
+
 // Mouse interaction for triangles
 window.addEventListener('pointermove', (event) => {
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    raycaster.setFromCamera(mouse, camera);
+    setPointerFromEvent(event);
     const intersects = raycaster.intersectObjects(triangles);
 
     if (intersects.length > 0) {
@@ -162,7 +266,10 @@ window.addEventListener('pointermove', (event) => {
             const triangle = intersect.object;
 
             // Apply a small force away from the cursor
-            const force = new THREE.Vector3().subVectors(triangle.position, raycaster.ray.origin).normalize().multiplyScalar(0.05);
+            const force = new THREE.Vector3()
+                .subVectors(triangle.position, raycaster.ray.origin)
+                .normalize()
+                .multiplyScalar(0.05);
             triangle.position.add(force);
 
             // Flash the triangle white for a short duration
@@ -175,5 +282,48 @@ window.addEventListener('pointermove', (event) => {
                 triangle.material.emissiveIntensity = 0.0;
             }, 100);
         });
+    }
+});
+
+window.addEventListener('pointerdown', (event) => {
+    setPointerFromEvent(event);
+
+    const bonusIntersects = raycaster.intersectObjects(bonusOrbs);
+    if (bonusIntersects.length > 0) {
+        const orb = bonusIntersects[0].object;
+        score += 5;
+        updateScoreText();
+        updateScoreOverlay();
+
+        bonusOrbs.splice(bonusOrbs.indexOf(orb), 1);
+        scene.remove(orb);
+        spawnBonusOrb();
+        return;
+    }
+
+    const intersects = raycaster.intersectObjects(triangles);
+
+    if (intersects.length > 0) {
+        const triangle = intersects[0].object;
+        updateComboState();
+        score += Math.round(multiplier);
+        updateScoreText();
+        updateScoreOverlay();
+
+        triangle.scale.multiplyScalar(1.1);
+        triangle.material.emissiveIntensity = 0.6;
+        setTimeout(() => {
+            triangle.scale.multiplyScalar(1 / 1.1);
+            triangle.material.emissiveIntensity = 0.0;
+        }, 140);
+
+        if (instructionsEl) {
+            instructionsEl.classList.add('acknowledged');
+            setTimeout(() => instructionsEl.classList.remove('acknowledged'), 400);
+        }
+    } else {
+        streak = 0;
+        multiplier = 1;
+        updateComboOverlay();
     }
 });

@@ -5,11 +5,111 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three.js Game scene (WIP)</title>
     <style>
-        body { margin: 0; overflow: hidden; }
+        :root {
+            color-scheme: dark;
+            --accent: #ff78c7;
+            --glow: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: #f7f7f7;
+            background: radial-gradient(circle at 30% 20%, rgba(255, 120, 199, 0.15), transparent 30%),
+                        radial-gradient(circle at 70% 60%, rgba(120, 184, 255, 0.12), transparent 35%),
+                        #0e0618;
+        }
+
+        .hud {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            pointer-events: none;
+            padding: 20px;
+        }
+
+        .hud__top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--glow);
+            padding: 10px 14px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .score {
+            font-size: 16px;
+            letter-spacing: 0.04em;
+        }
+
+        .stacked {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .score__value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-left: 6px;
+            text-shadow: 0 0 20px rgba(255, 120, 199, 0.6);
+        }
+
+        .title {
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.85;
+        }
+
+        .instructions {
+            max-width: 520px;
+            line-height: 1.5;
+            color: rgba(247, 247, 247, 0.85);
+            border: 1px solid var(--glow);
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.35);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+            transition: transform 120ms ease, box-shadow 120ms ease;
+        }
+
+        .instructions.acknowledged {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 120, 199, 0.25);
+        }
+
+        @media (max-width: 680px) {
+            .hud { padding: 12px; }
+            .hud__top { flex-direction: column; align-items: flex-start; }
+        }
     </style>
 </head>
 <body>
     <canvas id="three-canvas"></canvas>
+    <div class="hud" aria-hidden="true">
+        <div class="hud__top">
+            <div class="badge title">Clicker 3D</div>
+            <div class="stacked">
+                <div class="badge score">Счёт <span id="score-value" class="score__value">0</span></div>
+                <div class="badge score">Комбо <span id="combo-value" class="score__value">x1</span></div>
+            </div>
+        </div>
+        <div id="instructions" class="instructions badge">
+            Кликайте по треугольникам, чтобы набрать комбо и увеличить множитель очков. Периодически появляются светящиеся сферы — успейте кликнуть по ним, чтобы получить бонусные баллы. Наводите курсор, чтобы мягко отталкивать фигуры, и вращайте колесико мыши, чтобы приблизить или отдалить сцену.
+        </div>
+    </div>
     <script type="module" src="./main.js"></script>
 </body>
 </html>
