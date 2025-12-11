@@ -145,6 +145,12 @@ function updateComboOverlay() {
     }
 }
 
+function resetCombo() {
+    streak = 0;
+    multiplier = 1;
+    updateComboOverlay();
+}
+
 function updateComboState() {
     const now = performance.now();
     if (now - lastHitTime <= comboWindowMs) {
@@ -217,6 +223,7 @@ function animate() {
     requestAnimationFrame(animate);
 
     controls.update();
+    decayComboIfIdle();
 
     // Gradually increase the opacity for the fade-in effect over 3 seconds (3000 ms)
     const elapsedTime = clock.getElapsedTime();
@@ -249,6 +256,15 @@ function animate() {
 // Create a clock to track time for the fade-in and explosion effects
 const clock = new THREE.Clock();
 animate();
+
+function decayComboIfIdle() {
+    if (streak === 0) return;
+
+    const sinceLastHit = performance.now() - lastHitTime;
+    if (sinceLastHit > comboWindowMs) {
+        resetCombo();
+    }
+}
 
 function setPointerFromEvent(event) {
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -322,8 +338,6 @@ window.addEventListener('pointerdown', (event) => {
             setTimeout(() => instructionsEl.classList.remove('acknowledged'), 400);
         }
     } else {
-        streak = 0;
-        multiplier = 1;
-        updateComboOverlay();
+        resetCombo();
     }
 });
