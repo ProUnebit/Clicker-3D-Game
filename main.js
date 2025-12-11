@@ -76,17 +76,9 @@ const triangles = initTriangles(scene);
 const lightningGroup = new THREE.Group();
 scene.add(lightningGroup);
 
-spawnBonusOrb();
-setInterval(() => {
-    if (bonusOrbs.length < 3) {
-        spawnBonusOrb();
-    }
-}, 5000);
-
 // Shared DOM helpers
 const scoreValueEl = document.getElementById('score-value');
 const instructionsEl = document.getElementById('instructions');
-const comboValueEl = document.getElementById('combo-value');
 
 // Shared raycasting utilities
 const raycaster = new THREE.Raycaster();
@@ -139,83 +131,6 @@ function updateScoreOverlay() {
     }
 }
 
-function updateComboOverlay() {
-    if (comboValueEl) {
-        comboValueEl.textContent = `x${multiplier.toFixed(2).replace(/\.00$/, '.0').replace(/\.0$/, '')}`;
-    }
-}
-
-function resetCombo() {
-    streak = 0;
-    multiplier = 1;
-    updateComboOverlay();
-}
-
-function updateComboState() {
-    const now = performance.now();
-    if (now - lastHitTime <= comboWindowMs) {
-        streak += 1;
-    } else {
-        streak = 1;
-    }
-    lastHitTime = now;
-
-    multiplier = Math.min(1 + (streak - 1) * 0.25, 3);
-    updateComboOverlay();
-}
-
-function spawnBonusOrb() {
-    const geometry = new THREE.SphereGeometry(0.6, 24, 24);
-    const color = new THREE.Color(0x7efbff);
-    const material = new THREE.MeshPhysicalMaterial({
-        color,
-        emissive: color,
-        emissiveIntensity: 0.9,
-        metalness: 0.1,
-        roughness: 0.2,
-        transparent: true,
-        transmission: 0.8,
-        opacity: 0.9,
-        clearcoat: 0.8,
-    });
-
-    const orb = new THREE.Mesh(geometry, material);
-    orb.position.set(
-        (Math.random() - 0.5) * 12,
-        (Math.random() - 0.5) * 12,
-        (Math.random() - 0.5) * 12,
-    );
-    orb.userData = {
-        velocity: new THREE.Vector3((Math.random() - 0.5) * 0.03, (Math.random() - 0.5) * 0.03, (Math.random() - 0.5) * 0.03),
-        pulse: Math.random() * 0.005 + 0.002,
-        pulseDirection: 1,
-    };
-
-    scene.add(orb);
-    bonusOrbs.push(orb);
-}
-
-function animateBonusOrbs() {
-    const bounds = 14;
-
-    bonusOrbs.forEach((orb) => {
-        orb.position.add(orb.userData.velocity);
-        orb.material.emissiveIntensity = THREE.MathUtils.clamp(
-            orb.material.emissiveIntensity + orb.userData.pulse * orb.userData.pulseDirection,
-            0.4,
-            1.2,
-        );
-
-        if (orb.material.emissiveIntensity === 1.2 || orb.material.emissiveIntensity === 0.4) {
-            orb.userData.pulseDirection *= -1;
-        }
-
-        if (Math.abs(orb.position.x) > bounds) orb.userData.velocity.x = -orb.userData.velocity.x;
-        if (Math.abs(orb.position.y) > bounds) orb.userData.velocity.y = -orb.userData.velocity.y;
-        if (Math.abs(orb.position.z) > bounds) orb.userData.velocity.z = -orb.userData.velocity.z;
-    });
-}
-
 // Big Bang Effect (Scaling objects rapidly)
 let explosionStarted = false;
 
@@ -257,15 +172,6 @@ function animate() {
 const clock = new THREE.Clock();
 animate();
 
-function decayComboIfIdle() {
-    if (streak === 0) return;
-
-    const sinceLastHit = performance.now() - lastHitTime;
-    if (sinceLastHit > comboWindowMs) {
-        resetCombo();
-    }
-}
-
 function setPointerFromEvent(event) {
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -303,41 +209,22 @@ window.addEventListener('pointermove', (event) => {
 
 window.addEventListener('pointerdown', (event) => {
     setPointerFromEvent(event);
-
-    const bonusIntersects = raycaster.intersectObjects(bonusOrbs);
-    if (bonusIntersects.length > 0) {
-        const orb = bonusIntersects[0].object;
-        score += 5;
-        updateScoreText();
-        updateScoreOverlay();
-
-        bonusOrbs.splice(bonusOrbs.indexOf(orb), 1);
-        scene.remove(orb);
-        spawnBonusOrb();
-        return;
-    }
-
     const intersects = raycaster.intersectObjects(triangles);
 
     if (intersects.length > 0) {
         const triangle = intersects[0].object;
-        updateComboState();
-        score += Math.round(multiplier);
+        score += 1;
         updateScoreText();
         updateScoreOverlay();
 
         triangle.scale.multiplyScalar(1.1);
-        triangle.material.emissiveIntensity = 0.6;
         setTimeout(() => {
             triangle.scale.multiplyScalar(1 / 1.1);
-            triangle.material.emissiveIntensity = 0.0;
-        }, 140);
+        }, 120);
 
         if (instructionsEl) {
             instructionsEl.classList.add('acknowledged');
             setTimeout(() => instructionsEl.classList.remove('acknowledged'), 400);
         }
-    } else {
-        resetCombo();
     }
 });
