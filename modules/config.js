@@ -14,8 +14,8 @@ export const CONFIG = {
     // Orbit controls
     CONTROLS: {
         DAMPING_FACTOR: 0.05,
-        MIN_DISTANCE: 10,
-        MAX_DISTANCE: 100,
+        MIN_DISTANCE: 5,
+        MAX_DISTANCE: 50,
         ENABLE_PAN: false,
     },
 
@@ -97,7 +97,7 @@ export const CONFIG = {
 
     // Triangles
     TRIANGLES: {
-        COUNT: 20,
+        COUNT: 25,
         EXTRUDE_DEPTH: 0.5,
         BEVEL_THICKNESS: 0.2,
         BEVEL_SIZE: 0.2,
@@ -113,7 +113,7 @@ export const CONFIG = {
             METALNESS: 0.1,
             ROUGHNESS: 0.3,
             TRANSMISSION: 0.6,
-            OPACITY: 0.9,
+            OPACITY: 0.85,
             THICKNESS: 1.5,
             CLEARCOAT: 0.8,
             CLEARCOAT_ROUGHNESS: 0.1,
@@ -121,9 +121,9 @@ export const CONFIG = {
         // Division settings
         DIVISION: {
             ENABLED: true,
-            MIN_SCALE: 0.125, // Минимальный размер (1/8 от оригинала)
+            MIN_SCALE: 0.0625, // Минимальный размер (1/16 от оригинала)
             SPLIT_DISTANCE: 1.5, // Расстояние разлёта при делении
-            SPLIT_VELOCITY: 0.15, // Скорость разлёта
+            SPLIT_VELOCITY: 0.125, // Скорость разлёта
             SCALE_ANIMATION_DURATION: 200, // Длительность анимации деления (ms)
         },
     },
@@ -162,7 +162,7 @@ export const CONFIG = {
 
     // Particle system
     PARTICLES: {
-        COUNT_PER_CLICK: 20, // Number of particles per click
+        COUNT_PER_CLICK: 22, // Number of particles per click
         SIZE: 0.1,
         INITIAL_SPEED: 0.3,
         GRAVITY: -0.01,
