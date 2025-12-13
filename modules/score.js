@@ -26,7 +26,7 @@ export class ScoreManager {
         const fontLoader = new FontLoader();
         fontLoader.load(CONFIG.SCORE_TEXT.FONT_URL, (loadedFont) => {
             this.font = loadedFont;
-            this.createText();
+            // this.createText();
             this.updateOverlay();
         });
     }
@@ -76,7 +76,7 @@ export class ScoreManager {
         if (this.textMesh) {
             this.scene.remove(this.textMesh);
         }
-        this.createText();
+        // this.createText();
     }
 
     /**

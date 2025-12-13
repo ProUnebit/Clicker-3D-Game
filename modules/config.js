@@ -118,6 +118,14 @@ export const CONFIG = {
             CLEARCOAT: 0.8,
             CLEARCOAT_ROUGHNESS: 0.1,
         },
+        // Division settings
+        DIVISION: {
+            ENABLED: true,
+            MIN_SCALE: 0.125, // Минимальный размер (1/8 от оригинала)
+            SPLIT_DISTANCE: 1.5, // Расстояние разлёта при делении
+            SPLIT_VELOCITY: 0.15, // Скорость разлёта
+            SCALE_ANIMATION_DURATION: 200, // Длительность анимации деления (ms)
+        },
     },
 
     // Lightning
@@ -154,12 +162,19 @@ export const CONFIG = {
 
     // Particle system
     PARTICLES: {
-        COUNT_PER_CLICK: 30, // Number of particles per click
-        SIZE: 0.05,
+        COUNT_PER_CLICK: 20, // Number of particles per click
+        SIZE: 0.1,
         INITIAL_SPEED: 0.3,
         GRAVITY: -0.01,
         LIFETIME: 1000, // milliseconds
         FADE_START: 0.5, // Start fading at 50% of lifetime
         SPREAD_ANGLE: Math.PI * 2, // Full sphere
+        // Trail settings
+        TRAIL: {
+            ENABLED: true,
+            LENGTH: 10, // Number of trail points
+            POINT_SIZE: 3.0, // Size of trail points
+            FADE_SPEED: 0.95, // Trail fade multiplier per frame
+        },
     },
 };

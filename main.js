@@ -15,6 +15,7 @@ import {
 import { animateLightning } from "./modules/lightning.js";
 import { ScoreManager } from "./modules/score.js";
 import { ParticleSystem } from "./modules/particles.js";
+import { MenuManager } from "./modules/menu.js";
 import { setupEvents } from "./modules/events.js";
 
 // Initialize core components
@@ -39,11 +40,15 @@ const scoreManager = new ScoreManager(scene);
 // Initialize particle system
 const particleSystem = new ParticleSystem(scene);
 
+// Initialize menu manager
+const menuManager = new MenuManager();
+
 // Setup event listeners
 setupEvents({
     triangles,
     scoreManager,
     particleSystem,
+    scene,
     camera,
     renderer,
     composer,
@@ -52,6 +57,7 @@ setupEvents({
 
 // Big Bang explosion effect
 let explosionStarted = false;
+let gameStartTime = null;
 const clock = new THREE.Clock();
 
 /**

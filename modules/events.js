@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { CONFIG } from "./config.js";
+import { divideTriangle } from "./triangles.js";
 
 /**
  * Set up all event listeners
@@ -7,6 +8,7 @@ import { CONFIG } from "./config.js";
  * @param {THREE.Mesh[]} params.triangles
  * @param {ScoreManager} params.scoreManager
  * @param {ParticleSystem} params.particleSystem
+ * @param {THREE.Scene} params.scene
  * @param {THREE.Camera} params.camera
  * @param {THREE.WebGLRenderer} params.renderer
  * @param {EffectComposer} params.composer
@@ -16,6 +18,7 @@ export function setupEvents({
     triangles,
     scoreManager,
     particleSystem,
+    scene,
     camera,
     renderer,
     composer,
@@ -65,7 +68,7 @@ export function setupEvents({
         }
     });
 
-    // Click - increment score
+    // Click - increment score and divide triangle
     window.addEventListener("pointerdown", (event) => {
         setPointerFromEvent(event);
         const intersects = raycaster.intersectObjects(triangles);
@@ -83,13 +86,22 @@ export function setupEvents({
                 particleColor
             );
 
-            // Scale animation
-            triangle.scale.multiplyScalar(CONFIG.TRIANGLES.CLICK_SCALE_FACTOR);
-            setTimeout(() => {
+            // Try to divide triangle
+            const divided =
+                CONFIG.TRIANGLES.DIVISION.ENABLED &&
+                divideTriangle(scene, triangle, triangles);
+
+            // If not divided (too small), just do scale animation
+            if (!divided) {
                 triangle.scale.multiplyScalar(
-                    1 / CONFIG.TRIANGLES.CLICK_SCALE_FACTOR
+                    CONFIG.TRIANGLES.CLICK_SCALE_FACTOR
                 );
-            }, CONFIG.TRIANGLES.CLICK_SCALE_DURATION);
+                setTimeout(() => {
+                    triangle.scale.multiplyScalar(
+                        1 / CONFIG.TRIANGLES.CLICK_SCALE_FACTOR
+                    );
+                }, CONFIG.TRIANGLES.CLICK_SCALE_DURATION);
+            }
 
             // Flash instructions
             if (instructionsEl) {

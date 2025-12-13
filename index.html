@@ -1,184 +1,284 @@
 <!DOCTYPE html>
-<html lang="ru">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta
-            name="description"
-            content="Interactive 3D clicker game. Click triangles, collect points, enjoy stunning visual effects!"
-        />
-        <meta name="theme-color" content="#2c1238" />
-        <meta property="og:title" content="Clicker 3D Game" />
-        <meta
-            property="og:description"
-            content="Interactive 3D clicker game with WebGL"
-        />
+<html lang="en">
 
-        <title>Clicker 3D — Interactive Game</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Game scene (WIP)</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --accent: #ff78c7;
+            --accent-secondary: #78b8ff;
+            --glow: rgba(255, 255, 255, 0.08);
+        }
 
-        <link
-            rel="icon"
-            type="image/svg+xml"
-            href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🎮</text></svg>"
-        />
+        * {
+            box-sizing: border-box;
+        }
 
-        <!-- Preload fonts и модули -->
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preload" href="./main.js" as="script" type="module" />
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: #f7f7f7;
+            background: radial-gradient(circle at 30% 20%, rgba(255, 120, 199, 0.15), transparent 30%),
+                radial-gradient(circle at 70% 60%, rgba(120, 184, 255, 0.12), transparent 35%),
+                #0e0618;
+        }
 
-        <style>
-            :root {
-                color-scheme: dark;
-                --accent: #ff78c7;
-                --glow: rgba(255, 255, 255, 0.08);
+        /* Canvas - always in background */
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Start Menu */
+        .start-menu {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(14, 6, 24, 0.85);
+            backdrop-filter: blur(20px);
+            opacity: 1;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .start-menu.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .menu-title {
+            font-size: clamp(3rem, 10vw, 6rem);
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 40px rgba(255, 120, 199, 0.5);
+            animation: glow-pulse 3s ease-in-out infinite;
+        }
+
+        .menu-subtitle {
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: rgba(247, 247, 247, 0.7);
+            margin-bottom: 4rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .menu-btn {
+            position: relative;
+            padding: 1.2rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #f7f7f7;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--glow);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            min-width: 250px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .menu-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .menu-btn:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px rgba(255, 120, 199, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .menu-btn:hover::before {
+            opacity: 0.2;
+        }
+
+        .menu-btn:active {
+            transform: translateY(0);
+        }
+
+        .menu-btn--primary {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(255, 120, 199, 0.3);
+        }
+
+        .menu-btn--primary::before {
+            opacity: 0.15;
+        }
+
+        .menu-btn--secondary {
+            opacity: 0.8;
+        }
+
+        @keyframes glow-pulse {
+
+            0%,
+            100% {
+                filter: drop-shadow(0 0 20px rgba(255, 120, 199, 0.6));
             }
 
-            * {
-                box-sizing: border-box;
+            50% {
+                filter: drop-shadow(0 0 40px rgba(255, 120, 199, 0.9));
             }
+        }
 
-            body {
-                margin: 0;
-                overflow: hidden;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-                    Roboto, sans-serif;
-                color: #f7f7f7;
-                background: radial-gradient(
-                        circle at 30% 20%,
-                        rgba(255, 120, 199, 0.15),
-                        transparent 30%
-                    ),
-                    radial-gradient(
-                        circle at 70% 60%,
-                        rgba(120, 184, 255, 0.12),
-                        transparent 35%
-                    ),
-                    #0e0618;
-            }
+        /* Game HUD - hidden by default */
+        .hud {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            pointer-events: none;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 10;
+        }
 
-            #three-canvas {
-                display: block;
-                width: 100%;
-                height: 100vh;
-            }
+        .hud.visible {
+            opacity: 1;
+        }
 
+        .hud__top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--glow);
+            padding: 10px 14px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .score {
+            font-size: 16px;
+            letter-spacing: 0.04em;
+        }
+
+        .score__value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-left: 6px;
+            text-shadow: 0 0 20px rgba(255, 120, 199, 0.6);
+        }
+
+        .title {
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.85;
+        }
+
+        .instructions {
+            max-width: 520px;
+            line-height: 1.5;
+            color: rgba(247, 247, 247, 0.85);
+            border: 1px solid var(--glow);
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.35);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+            transition: transform 120ms ease, box-shadow 120ms ease;
+        }
+
+        .instructions.acknowledged {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 120, 199, 0.25);
+        }
+
+        @media (max-width: 680px) {
             .hud {
-                position: fixed;
-                inset: 0;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                pointer-events: none;
-                padding: 20px;
+                padding: 12px;
             }
 
             .hud__top {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: 16px;
+                flex-direction: column;
+                align-items: flex-start;
             }
 
-            .badge {
-                background: rgba(255, 255, 255, 0.04);
-                border: 1px solid var(--glow);
-                padding: 10px 14px;
-                border-radius: 12px;
-                backdrop-filter: blur(10px);
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-                pointer-events: auto;
+            .menu-title {
+                font-size: 3rem;
             }
 
-            .score {
-                font-size: 16px;
-                letter-spacing: 0.04em;
+            .menu-subtitle {
+                font-size: 1rem;
             }
 
-            .score__value {
-                font-size: 28px;
-                font-weight: 700;
-                color: var(--accent);
-                margin-left: 6px;
-                text-shadow: 0 0 20px rgba(255, 120, 199, 0.6);
+            .menu-btn {
+                min-width: 200px;
+                font-size: 1rem;
+                padding: 1rem 2rem;
             }
+        }
+    </style>
+</head>
 
-            .title {
-                font-weight: 700;
-                letter-spacing: 0.08em;
-                text-transform: uppercase;
-                opacity: 0.85;
-            }
+<body>
+    <canvas id="three-canvas"></canvas>
 
-            .instructions {
-                max-width: 520px;
-                line-height: 1.5;
-                color: rgba(247, 247, 247, 0.85);
-                border: 1px solid var(--glow);
-                padding: 12px 14px;
-                border-radius: 12px;
-                background: rgba(0, 0, 0, 0.35);
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
-                transition: transform 120ms ease, box-shadow 120ms ease;
-            }
-
-            .instructions.acknowledged {
-                transform: translateY(-2px);
-                box-shadow: 0 10px 30px rgba(255, 120, 199, 0.25);
-            }
-
-            @media (max-width: 680px) {
-                .hud {
-                    padding: 12px;
-                }
-                .hud__top {
-                    flex-direction: column;
-                    align-items: flex-start;
-                }
-                body {
-                    font-size: 14px;
-                }
-            }
-
-            /* Accessibility: focus states */
-            @media (prefers-reduced-motion: reduce) {
-                * {
-                    animation-duration: 0.01ms !important;
-                    animation-iteration-count: 1 !important;
-                    transition-duration: 0.01ms !important;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <canvas id="three-canvas">
-            Your browser doesn't support WebGL. Please use a modern browser.
-        </canvas>
-
-        <div class="hud">
-            <div class="hud__top">
-                <div class="badge title" aria-label="Game title">
-                    Clicker 3D
-                </div>
-                <div
-                    class="badge score"
-                    aria-live="polite"
-                    aria-label="Current score"
-                >
-                    Счёт <span id="score-value" class="score__value">0</span>
-                </div>
-            </div>
-            <div
-                id="instructions"
-                class="instructions badge"
-                role="complementary"
-                aria-label="Game instructions"
-            >
-                Кликайте по треугольникам, чтобы набирать очки. Наводите курсор,
-                чтобы мягко отталкивать фигуры, и вращайте колесико мыши, чтобы
-                приблизить или отдалить сцену.
-            </div>
+    <!-- Start Menu -->
+    <div id="start-menu" class="start-menu">
+        <h1 class="menu-title">Clicker 3D</h1>
+        <p class="menu-subtitle">Relaxing Division Edition</p>
+        <div class="menu-buttons">
+            <button id="btn-start" class="menu-btn menu-btn--primary">Начать</button>
+            <button id="btn-exit" class="menu-btn menu-btn--secondary">Выйти</button>
         </div>
+    </div>
 
-        <script type="module" src="./main.js"></script>
-    </body>
+    <!-- Game HUD -->
+    <div id="game-hud" class="hud">
+        <div class="hud__top">
+            <div class="badge title">Clicker 3D</div>
+            <div class="badge score">Счёт <span id="score-value" class="score__value">0</span></div>
+        </div>
+        <div id="instructions" class="instructions badge">
+            Кликайте по треугольникам, чтобы набирать очки. Наводите курсор, чтобы мягко отталкивать фигуры, и вращайте
+            колесико мыши, чтобы приблизить или отдалить сцену.
+        </div>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+</body>
+
 </html>
