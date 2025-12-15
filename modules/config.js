@@ -61,7 +61,7 @@ export const CONFIG = {
     // Color palette (shared by fireflies and triangles)
     COLORS: {
         PALETTE: [
-            0x8a2be2, // Blue Violet
+            0x7a1bc2, // Blue Violet
             0xff69b4, // Hot Pink
             0xff0000, // Red
             0xffff00, // Yellow
@@ -162,7 +162,7 @@ export const CONFIG = {
 
     // Particle system
     PARTICLES: {
-        COUNT_PER_CLICK: 20, // Number of particles per click
+        COUNT_PER_CLICK: 22, // Number of particles per click
         SIZE: 0.1,
         INITIAL_SPEED: 0.3,
         GRAVITY: -0.01,
