@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three.js Clicker 3D (WIP)</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🎮</text></svg>">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🎮</text></svg>">
     <style>
         :root {
             color-scheme: dark;
@@ -177,8 +178,51 @@
         .hud__top {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             gap: 16px;
+        }
+
+        .hud__right {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .color-scores {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px 8px;
+            font-size: 18px;
+            min-width: 80px;
+        }
+
+        .color-score-item {
+            display: flex;
+            align-items: center;
+            /* gap: 8px; */
+            transition: transform 0.2s ease-out;
+        }
+
+        .color-score-item.flash {
+            transform: scale(1.1);
+        }
+
+        .color-indicator {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 10px currentColor;
+            flex-shrink: 0;
+        }
+
+        .color-score-value {
+            font-weight: 600;
+            color: rgba(247, 247, 247, 0.9);
+            min-width: 30px;
+            text-align: right;
         }
 
         .badge {
@@ -196,10 +240,10 @@
         }
 
         .score__value {
-            font-size: 28px;
+            font-size: 34px;
             font-weight: 700;
             color: var(--accent);
-            margin: 5px;
+            margin: 6px;
             text-shadow: 0 0 20px rgba(255, 120, 199, 0.6);
         }
 
@@ -207,7 +251,8 @@
             font-weight: 700;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            opacity: 0.85;
+            opacity: 0.7;
+            font-size: 10px;
         }
 
         .instructions {
@@ -271,8 +316,13 @@
     <!-- Game HUD -->
     <div id="game-hud" class="hud">
         <div class="hud__top">
-            <div class="badge title">Clicker 3D</div>
-            <div class="badge score"><span id="score-value" class="score__value">0</span></div>
+            <div class="badge title">by Alexey Ratnikov</div>
+            <div class="hud__right">
+                <div class="badge score">
+                    <span id="score-value" class="score__value">0</span>
+                </div>
+                <div id="color-scores" class="badge color-scores"></div>
+            </div>
         </div>
         <div id="instructions" class="instructions badge">
             ⭐️ Вращайте колесико мыши, чтобы приблизить или отдалить камеру.<br>
