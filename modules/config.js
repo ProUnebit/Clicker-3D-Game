@@ -65,7 +65,7 @@ export const CONFIG = {
             0xff69b4, // Hot Pink
             0xff0000, // Red
             0xffff00, // Yellow
-            0xffa500, // Orange
+            0xffc500, // Orange
             0x00dd20, // Green
             0x0000ff, // Blue
             0xf5f5f5, // White Smoke
@@ -97,7 +97,7 @@ export const CONFIG = {
 
     // Triangles
     TRIANGLES: {
-        COUNT: 20,
+        COUNT: 50,
         EXTRUDE_DEPTH: 0.5,
         BEVEL_THICKNESS: 0.2,
         BEVEL_SIZE: 0.2,
@@ -113,7 +113,7 @@ export const CONFIG = {
             METALNESS: 0.1,
             ROUGHNESS: 0.3,
             TRANSMISSION: 0.6,
-            OPACITY: 0.9,
+            OPACITY: 0.8,
             THICKNESS: 1.5,
             CLEARCOAT: 0.8,
             CLEARCOAT_ROUGHNESS: 0.1,
@@ -121,7 +121,7 @@ export const CONFIG = {
         // Division settings
         DIVISION: {
             ENABLED: true,
-            MIN_SCALE: 0.125, // Минимальный размер (1/8 от оригинала)
+            MIN_SCALE: 0.0625, // Минимальный размер (1/8 от оригинала)
             SPLIT_DISTANCE: 1.5, // Расстояние разлёта при делении
             SPLIT_VELOCITY: 0.15, // Скорость разлёта
             SCALE_ANIMATION_DURATION: 200, // Длительность анимации деления (ms)

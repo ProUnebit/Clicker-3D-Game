@@ -91,14 +91,16 @@ export class InputSystem {
         if (intersects.length > 0) {
             const triangle = intersects[0].object;
 
-            // Increment score
-            this.scoreManager.increment();
+            // Get triangle color
+            const triangleColor = triangle.material.color.getHex();
+
+            // Increment score with color
+            this.scoreManager.increment(triangleColor);
 
             // Create particle explosion
-            const particleColor = triangle.material.color.getHex();
             this.particleSystem.createExplosion(
                 triangle.position.clone(),
-                particleColor
+                triangleColor
             );
 
             // Try to divide triangle
