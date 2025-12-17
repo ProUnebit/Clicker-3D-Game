@@ -2,6 +2,14 @@ import type { GameConfig } from "../types";
 
 // Central configuration for all game constants
 export const CONFIG: GameConfig = {
+
+    // Debug settings
+    DEBUG: {
+        PERFORMANCE_MONITOR: false,
+        LOG_TRIANGLES: true,
+        LOG_PARTICLES: true,
+    },
+
     // Scene boundaries
     BOUNDS: 15,
 

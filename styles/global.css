@@ -283,8 +283,8 @@ body {
 }
 
 .instructions.acknowledged {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(255, 120, 199, 0.25);
+    /* transform: translateY(-2px); */
+    /* box-shadow: 0 10px 30px rgba(255, 120, 199, 0.25); */
 }
 
 @media (max-width: 680px) {

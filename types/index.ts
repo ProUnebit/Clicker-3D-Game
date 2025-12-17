@@ -3,8 +3,12 @@ import * as THREE from "three";
 // ===========================
 // Game State Types
 // ===========================
-
-export type GameState = "menu" | "playing" | "paused";
+export enum GameState {
+    MENU = "MENU",
+    PLAYING = "PLAYING",
+    PAUSED = "PAUSED",
+}
+// export type GameState = "MENU" | "PLAYING" | "PAUSED";
 
 // ===========================
 // UserData Interfaces
@@ -240,7 +244,14 @@ export interface ParticlesConfig {
     TRAIL: TrailConfig;
 }
 
+export interface DebugConfig {
+    PERFORMANCE_MONITOR: boolean;
+    LOG_TRIANGLES: boolean;
+    LOG_PARTICLES: boolean;
+}
+
 export interface GameConfig {
+    DEBUG: DebugConfig;
     BOUNDS: number;
     CAMERA: CameraConfig;
     CONTROLS: ControlsConfig;

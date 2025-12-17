@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { CONFIG } from "../config";
-import type { GameState, FireflyMesh, TriangleMesh } from "../types";
+import { GameState, FireflyMesh, TriangleMesh } from "../types";
 import { initScene } from "./scene";
 import { initCamera, initControls } from "./camera";
 import { initLighting } from "./lighting";
@@ -13,6 +13,7 @@ import { RenderSystem } from "./systems/RenderSystem";
 import { PhysicsSystem } from "./systems/PhysicsSystem";
 import { AnimationSystem } from "./systems/AnimationSystem";
 import { InputSystem } from "./systems/InputSystem";
+import { PerformanceMonitor } from "./PerformanceMonitor";
 
 /**
  * GameManager - Main game controller
@@ -36,6 +37,7 @@ export class GameManager {
     // Managers
     private scoreManager: ScoreManager | null;
     private particleSystem: ParticleSystem | null;
+    private performanceMonitor: PerformanceMonitor;
 
     // Systems
     private renderSystem: RenderSystem | null;
@@ -48,7 +50,7 @@ export class GameManager {
     private gameStartTime: number | null;
 
     constructor() {
-        this.state = "menu";
+        this.state = GameState.MENU;
         this.animationId = null;
         this.clock = new THREE.Clock();
 
@@ -63,6 +65,7 @@ export class GameManager {
 
         this.scoreManager = null;
         this.particleSystem = null;
+        this.performanceMonitor = new PerformanceMonitor(CONFIG.DEBUG.PERFORMANCE_MONITOR);
 
         this.renderSystem = null;
         this.physicsSystem = null;
@@ -130,10 +133,10 @@ export class GameManager {
      * Start the game
      */
     start(): void {
-        if (this.state === "playing") return;
+        if (this.state === GameState.PLAYING) return;
 
         console.log("▶️ GameManager: Starting game");
-        this.state = "playing";
+        this.state = GameState.PLAYING;
         this.explosionStarted = false;
         this.gameStartTime = null;
 
@@ -154,20 +157,20 @@ export class GameManager {
      * Pause the game
      */
     pause(): void {
-        if (this.state !== "playing") return;
+        if (this.state !== GameState.PLAYING) return;
 
         console.log("⏸️ GameManager: Pausing game");
-        this.state = "paused";
+        this.state = GameState.PAUSED;
     }
 
     /**
      * Resume the game
      */
     resume(): void {
-        if (this.state !== "paused") return;
+        if (this.state !== GameState.PAUSED) return;
 
         console.log("▶️ GameManager: Resuming game");
-        this.state = "playing";
+        this.state = GameState.PLAYING;
     }
 
     /**
@@ -194,7 +197,7 @@ export class GameManager {
      */
     stop(): void {
         console.log("⏹️ GameManager: Stopping game");
-        this.state = "menu";
+        this.state = GameState.MENU;
 
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
@@ -206,6 +209,8 @@ export class GameManager {
      * Main animation loop
      */
     private animate = (): void => {
+        this.performanceMonitor.begin();
+
         this.animationId = requestAnimationFrame(this.animate);
 
         // Always update controls
@@ -214,7 +219,7 @@ export class GameManager {
         }
 
         // Only update game logic if playing
-        if (this.state === "playing") {
+        if (this.state === GameState.PLAYING) {
             // Big Bang explosion effect
             if (!this.explosionStarted) {
                 this.gameStartTime = this.clock.getElapsedTime();
@@ -249,6 +254,14 @@ export class GameManager {
             this.physicsSystem?.setTriangles(this.triangles);
             this.animationSystem?.setTriangles(this.triangles);
             this.inputSystem?.setTriangles(this.triangles);
+
+            // ✅ Обнови метрики профилирования
+            this.performanceMonitor.setMetric(
+                "Particles",
+                this.particleSystem?.getParticleCount() || 0
+            );
+            this.performanceMonitor.setMetric("Triangles", this.triangles.length);
+            this.performanceMonitor.setMetric("Fireflies", this.fireflies.length);
         } else {
             // Menu is showing - keep canvas visible but dim
             this.renderSystem?.setOpacity(0.3);
@@ -256,6 +269,8 @@ export class GameManager {
 
         // Always render
         this.renderSystem?.render();
+
+        this.performanceMonitor.end();
     };
 
     /**
@@ -270,6 +285,9 @@ export class GameManager {
         this.physicsSystem?.dispose();
         this.animationSystem?.dispose();
         this.particleSystem?.clear();
+
+        // ✅ Dispose performance monitor
+        this.performanceMonitor.dispose();
 
         // Clear scene
         if (this.scene) {
@@ -301,5 +319,13 @@ export class GameManager {
      */
     getState(): GameState {
         return this.state;
+    }
+
+    /**
+     * Toggle performance monitoring (for debugging)
+     * Can be called from browser console: game.togglePerformanceMonitor()
+     */
+    togglePerformanceMonitor(): void {
+        this.performanceMonitor.toggle();
     }
 }
