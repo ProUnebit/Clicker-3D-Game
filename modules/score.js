@@ -59,7 +59,6 @@ export class ScoreManager {
         this.updateText();
         this.updateOverlay();
     }
-
     /**
      * Update color scores display in UI
      * @param {number} flashColor - Color to flash (optional)
@@ -73,43 +72,45 @@ export class ScoreManager {
         // Sort colors by score (descending)
         const sortedColors = Object.entries(this.colorScores)
             .sort((a, b) => b[1] - a[1])
-            .filter(([_, count]) => count > 0); // Only show colors with clicks
+            .filter(([_, count]) => count > 0);
 
         if (sortedColors.length === 0) {
-            // Show placeholder if no clicks yet
             this.colorScoresEl.style.display = "none";
             return;
         }
 
         this.colorScoresEl.style.display = "flex";
 
-        // Create elements for each color
         sortedColors.forEach(([colorHex, count]) => {
             const item = document.createElement("div");
             item.className = "color-score-item";
-            item.dataset.color = colorHex;
 
-            // Color indicator (square with color)
-            const indicator = document.createElement("div");
-            indicator.className = "color-indicator";
-            const hexString = parseInt(colorHex).toString(16).padStart(6, "0");
-            indicator.style.backgroundColor = `#${hexString}`;
+            // Create or reuse mini triangle renderer
+            const colorInt = parseInt(colorHex);
+            if (!this.miniRenderers[colorInt]) {
+                this.miniRenderers[colorInt] = new MiniTriangleRenderer(
+                    colorInt,
+                    40
+                );
+                console.log("✅ Created 3D triangle for color:", colorInt);
+            }
+
+            // Get canvas from renderer
+            const canvas = this.miniRenderers[colorInt].getCanvas();
+            canvas.className = "color-indicator-3d";
 
             // Score value
             const value = document.createElement("span");
             value.className = "color-score-value";
             value.textContent = count;
 
-            item.appendChild(indicator);
+            item.appendChild(canvas);
             item.appendChild(value);
             this.colorScoresEl.appendChild(item);
 
-            // Flash animation for updated color
-            if (flashColor !== null && parseInt(colorHex) === flashColor) {
+            if (flashColor !== null && colorInt === flashColor) {
                 item.classList.add("flash");
-                setTimeout(() => {
-                    item.classList.remove("flash");
-                }, 200);
+                setTimeout(() => item.classList.remove("flash"), 200);
             }
         });
     }

@@ -114,7 +114,7 @@ export class MiniTriangleRenderer {
 
         // Slow rotation
         if (this.triangle) {
-            this.triangle.rotation.y += 0.01; // Slow rotation around Y axis
+            this.triangle.rotation.y += 0.02; // Slow rotation around Y axis
         }
 
         this.renderer.render(this.scene, this.camera);
