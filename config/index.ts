@@ -1,5 +1,7 @@
+import type { GameConfig } from "../types";
+
 // Central configuration for all game constants
-export const CONFIG = {
+export const CONFIG: GameConfig = {
     // Scene boundaries
     BOUNDS: 15,
 
@@ -177,4 +179,4 @@ export const CONFIG = {
             FADE_SPEED: 0.95, // Trail fade multiplier per frame
         },
     },
-};
+} as const;

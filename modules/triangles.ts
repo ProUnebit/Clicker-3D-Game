@@ -1,19 +1,20 @@
 import * as THREE from "three";
-import { CONFIG } from "./config.js";
+import { CONFIG } from "../config";
+import type { TriangleMesh } from "../types";
 import {
     getRandomColor,
     getRandomPosition,
     getRandomVelocity,
     bounceOffBounds,
-} from "./utils.js";
+} from "./utils";
 
 /**
  * Initialize triangles in the scene
- * @param {THREE.Scene} scene
- * @returns {THREE.Mesh[]} Array of triangle meshes
+ * @param scene - Scene to add triangles to
+ * @returns Array of triangle meshes
  */
-export function initTriangles(scene) {
-    const triangles = [];
+export function initTriangles(scene: THREE.Scene): TriangleMesh[] {
+    const triangles: TriangleMesh[] = [];
     const {
         COUNT,
         EXTRUDE_DEPTH,
@@ -55,7 +56,7 @@ export function initTriangles(scene) {
             clearcoatRoughness: MATERIAL.CLEARCOAT_ROUGHNESS,
         });
 
-        const triangle = new THREE.Mesh(geometry, material);
+        const triangle = new THREE.Mesh(geometry, material) as TriangleMesh;
         triangle.position.copy(getRandomPosition());
 
         triangle.userData = {
@@ -77,10 +78,10 @@ export function initTriangles(scene) {
 }
 
 /**
- * Animate all triangles
- * @param {THREE.Mesh[]} triangles
+ * Animate all triangles (rotation and movement)
+ * @param triangles - Array of triangle meshes to animate
  */
-export function animateTriangles(triangles) {
+export function animateTriangles(triangles: TriangleMesh[]): void {
     triangles.forEach((triangle) => {
         // Rotate
         triangle.rotation.x += triangle.userData.rotationSpeed;
@@ -97,9 +98,9 @@ export function animateTriangles(triangles) {
 /**
  * Handle flash effects for triangles
  * Should be called in animation loop
- * @param {THREE.Mesh[]} triangles
+ * @param triangles - Array of triangle meshes
  */
-export function handleTriangleFlashes(triangles) {
+export function handleTriangleFlashes(triangles: TriangleMesh[]): void {
     const { FLASH_DURATION } = CONFIG.TRIANGLES;
     const now = performance.now();
 
@@ -123,22 +124,22 @@ export function handleTriangleFlashes(triangles) {
 
 /**
  * Create a new triangle (used for division)
- * @param {THREE.Scene} scene
- * @param {THREE.Vector3} position
- * @param {number} color
- * @param {number} scale
- * @param {THREE.Vector3} velocity
- * @param {number} generation
- * @returns {THREE.Mesh}
+ * @param scene - Scene to add triangle to
+ * @param position - Triangle position
+ * @param color - Triangle color (hex)
+ * @param scale - Triangle scale
+ * @param velocity - Initial velocity
+ * @param generation - Generation number (how many times split)
+ * @returns New triangle mesh
  */
 export function createTriangle(
-    scene,
-    position,
-    color,
-    scale,
-    velocity,
-    generation = 0
-) {
+    scene: THREE.Scene,
+    position: THREE.Vector3,
+    color: number,
+    scale: number,
+    velocity: THREE.Vector3,
+    generation: number = 0
+): TriangleMesh {
     const {
         EXTRUDE_DEPTH,
         BEVEL_THICKNESS,
@@ -176,7 +177,7 @@ export function createTriangle(
         clearcoatRoughness: MATERIAL.CLEARCOAT_ROUGHNESS,
     });
 
-    const triangle = new THREE.Mesh(geometry, material);
+    const triangle = new THREE.Mesh(geometry, material) as TriangleMesh;
     triangle.position.copy(position);
     triangle.scale.set(scale, scale, scale);
 
@@ -197,12 +198,16 @@ export function createTriangle(
 
 /**
  * Divide triangle into two smaller triangles
- * @param {THREE.Scene} scene
- * @param {THREE.Mesh} triangle - Triangle to divide
- * @param {THREE.Mesh[]} triangles - Array of all triangles
- * @returns {boolean} - True if division happened, false if triangle too small
+ * @param scene - Scene containing the triangle
+ * @param triangle - Triangle to divide
+ * @param triangles - Array of all triangles (will be modified)
+ * @returns True if division happened, false if triangle too small
  */
-export function divideTriangle(scene, triangle, triangles) {
+export function divideTriangle(
+    scene: THREE.Scene,
+    triangle: TriangleMesh,
+    triangles: TriangleMesh[]
+): boolean {
     const { MIN_SCALE, SPLIT_DISTANCE, SPLIT_VELOCITY } =
         CONFIG.TRIANGLES.DIVISION;
 
@@ -273,9 +278,9 @@ export function divideTriangle(scene, triangle, triangles) {
 
 /**
  * Handle collisions between triangles
- * @param {THREE.Mesh[]} triangles
+ * @param triangles - Array of all triangles
  */
-export function handleTriangleCollisions(triangles) {
+export function handleTriangleCollisions(triangles: TriangleMesh[]): void {
     const maxCheckDistance = 5; // Skip distant objects for performance
 
     for (let i = 0; i < triangles.length; i++) {

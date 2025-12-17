@@ -1,5 +1,5 @@
-import { GameManager } from "./modules/GameManager.js";
-import { MenuManager } from "./modules/menu.js";
+import { GameManager } from "./modules/GameManager";
+import { MenuManager } from "./modules/MenuManager";
 
 // Initialize game manager
 const game = new GameManager();
@@ -13,5 +13,5 @@ menuManager.onGameStart = () => {
     game.start();
 };
 
-// Start animation loop (for menu background)
-game.animate();
+// Start animation loop (for menu background and game rendering)
+game.startAnimationLoop();

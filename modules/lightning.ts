@@ -1,11 +1,12 @@
 import * as THREE from "three";
-import { CONFIG } from "./config.js";
+import { CONFIG } from "../config";
+import type { LightningBolt, FlashLight } from "../types";
 
 /**
  * Create a lightning bolt with branches
- * @param {THREE.Group} lightningGroup
+ * @param lightningGroup - Group to add lightning to
  */
-export function createLightning(lightningGroup) {
+export function createLightning(lightningGroup: THREE.Group): void {
     const { SEGMENTS, MAX_LENGTH } = CONFIG.LIGHTNING;
     const { LIGHTNING } = CONFIG.COLORS;
 
@@ -68,19 +69,26 @@ export function createLightning(lightningGroup) {
 
 /**
  * Create a single lightning bolt segment
- * @param {THREE.Vector3} start - Start position
- * @param {THREE.Vector3} direction - Direction vector
- * @param {number} length - Total length
- * @param {number} segments - Number of segments
- * @param {number} color - Color
- * @param {number} thickness - Thickness multiplier
- * @returns {THREE.Group}
+ * @param start - Start position
+ * @param direction - Direction vector
+ * @param length - Total length
+ * @param segments - Number of segments
+ * @param color - Color (hex)
+ * @param thickness - Thickness multiplier
+ * @returns Lightning bolt group
  */
-function createBolt(start, direction, length, segments, color, thickness) {
-    const boltGroup = new THREE.Group();
+function createBolt(
+    start: THREE.Vector3,
+    direction: THREE.Vector3,
+    length: number,
+    segments: number,
+    color: number,
+    thickness: number
+): LightningBolt {
+    const boltGroup = new THREE.Group() as LightningBolt;
 
     // Generate jagged path
-    const points = [];
+    const points: THREE.Vector3[] = [];
     let currentPos = start.clone();
     points.push(currentPos.clone());
 
@@ -118,7 +126,7 @@ function createBolt(start, direction, length, segments, color, thickness) {
     const coreMaterial = new THREE.LineBasicMaterial({
         color: 0xffffff,
         transparent: true,
-        opacity: 0.7, // Было 1.0
+        opacity: 0.7,
         linewidth: 3 * thickness,
     });
     const coreLine = new THREE.Line(coreGeometry, coreMaterial);
@@ -129,7 +137,7 @@ function createBolt(start, direction, length, segments, color, thickness) {
     const glow1Material = new THREE.LineBasicMaterial({
         color: color,
         transparent: true,
-        opacity: 0.4, // Было 0.6
+        opacity: 0.4,
         linewidth: 5 * thickness,
         blending: THREE.AdditiveBlending,
     });
@@ -141,7 +149,7 @@ function createBolt(start, direction, length, segments, color, thickness) {
     const glow2Material = new THREE.LineBasicMaterial({
         color: color,
         transparent: true,
-        opacity: 0.2, // Было 0.3
+        opacity: 0.2,
         linewidth: 8 * thickness,
         blending: THREE.AdditiveBlending,
     });
@@ -149,20 +157,27 @@ function createBolt(start, direction, length, segments, color, thickness) {
     boltGroup.add(glow2Line);
 
     // Store references for animation
-    boltGroup.userData.coreMaterial = coreMaterial;
-    boltGroup.userData.glow1Material = glow1Material;
-    boltGroup.userData.glow2Material = glow2Material;
-    boltGroup.userData.maxOpacity = { core: 0.7, glow1: 0.4, glow2: 0.2 }; // Обновлённые значения
+    boltGroup.userData = {
+        createdAt: 0, // Will be set by caller
+        isMainBolt: false, // Will be set by caller
+        coreMaterial: coreMaterial,
+        glow1Material: glow1Material,
+        glow2Material: glow2Material,
+        maxOpacity: { core: 0.7, glow1: 0.4, glow2: 0.2 },
+    };
 
     return boltGroup;
 }
 
 /**
  * Animate lightning strikes randomly
- * @param {THREE.Group} lightningGroup
- * @param {THREE.Scene} scene
+ * @param lightningGroup - Group containing lightning bolts
+ * @param scene - Scene to add flash lights to
  */
-export function animateLightning(lightningGroup, scene) {
+export function animateLightning(
+    lightningGroup: THREE.Group,
+    scene: THREE.Scene
+): void {
     const { SPAWN_CHANCE, FLASH_DURATION, FLASH_INTENSITY, FLASH_DISTANCE } =
         CONFIG.LIGHTNING;
     const { LIGHTNING } = CONFIG.COLORS;
@@ -176,22 +191,28 @@ export function animateLightning(lightningGroup, scene) {
             LIGHTNING,
             FLASH_INTENSITY,
             FLASH_DISTANCE
-        );
+        ) as FlashLight;
         const positionX = (Math.random() - 0.5) * 30;
         const positionY = (Math.random() - 0.5) * 30;
         const positionZ = (Math.random() - 0.5) * 30;
         flashLight.position.set(positionX, positionY, positionZ);
-        flashLight.userData.createdAt = performance.now();
-        flashLight.userData.initialIntensity = FLASH_INTENSITY;
+        flashLight.userData = {
+            createdAt: performance.now(),
+            initialIntensity: FLASH_INTENSITY,
+        };
         scene.add(flashLight);
     }
 
     // Animate existing lightning bolts
     const now = performance.now();
-    const objectsToRemove = [];
+    const objectsToRemove: Array<{
+        parent: THREE.Group | THREE.Scene;
+        child: THREE.Object3D;
+    }> = [];
 
     lightningGroup.children.forEach((bolt) => {
-        const age = now - bolt.userData.createdAt;
+        const lightningBolt = bolt as LightningBolt;
+        const age = now - lightningBolt.userData.createdAt;
         const progress = age / FLASH_DURATION;
 
         if (progress >= 1) {
@@ -205,33 +226,41 @@ export function animateLightning(lightningGroup, scene) {
             const fadeOut = 1 - Math.pow(progress, 2); // Quadratic fade
 
             // Apply to all materials
-            if (bolt.userData.coreMaterial) {
-                bolt.userData.coreMaterial.opacity =
-                    bolt.userData.maxOpacity.core * fadeOut * flicker;
+            if (lightningBolt.userData.coreMaterial) {
+                lightningBolt.userData.coreMaterial.opacity =
+                    lightningBolt.userData.maxOpacity!.core * fadeOut * flicker;
             }
-            if (bolt.userData.glow1Material) {
-                bolt.userData.glow1Material.opacity =
-                    bolt.userData.maxOpacity.glow1 * fadeOut * flicker;
+            if (lightningBolt.userData.glow1Material) {
+                lightningBolt.userData.glow1Material.opacity =
+                    lightningBolt.userData.maxOpacity!.glow1 *
+                    fadeOut *
+                    flicker;
             }
-            if (bolt.userData.glow2Material) {
-                bolt.userData.glow2Material.opacity =
-                    bolt.userData.maxOpacity.glow2 * fadeOut * flicker;
+            if (lightningBolt.userData.glow2Material) {
+                lightningBolt.userData.glow2Material.opacity =
+                    lightningBolt.userData.maxOpacity!.glow2 *
+                    fadeOut *
+                    flicker;
             }
         }
     });
 
     // Animate flash lights
     scene.children.forEach((child) => {
-        if (child instanceof THREE.PointLight && child.userData.createdAt) {
-            const age = now - child.userData.createdAt;
+        if (
+            child instanceof THREE.PointLight &&
+            "createdAt" in child.userData
+        ) {
+            const flashLight = child as FlashLight;
+            const age = now - flashLight.userData.createdAt;
             const progress = age / FLASH_DURATION;
 
             if (progress >= 1) {
                 objectsToRemove.push({ parent: scene, child });
             } else {
                 // Fade out flash
-                child.intensity =
-                    child.userData.initialIntensity * (1 - progress);
+                flashLight.intensity =
+                    flashLight.userData.initialIntensity * (1 - progress);
             }
         }
     });
@@ -241,10 +270,21 @@ export function animateLightning(lightningGroup, scene) {
         parent.remove(child);
 
         // Dispose geometries and materials
-        if (child.traverse) {
+        if ("traverse" in child) {
             child.traverse((obj) => {
-                if (obj.geometry) obj.geometry.dispose();
-                if (obj.material) obj.material.dispose();
+                if ("geometry" in obj && obj.geometry) {
+                    (obj.geometry as THREE.BufferGeometry).dispose();
+                }
+                if ("material" in obj && obj.material) {
+                    const material = obj.material as
+                        | THREE.Material
+                        | THREE.Material[];
+                    if (Array.isArray(material)) {
+                        material.forEach((mat) => mat.dispose());
+                    } else {
+                        material.dispose();
+                    }
+                }
             });
         }
     });

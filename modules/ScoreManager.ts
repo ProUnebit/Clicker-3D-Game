@@ -1,19 +1,29 @@
 import * as THREE from "three";
-import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
+import { Font, FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
-import { CONFIG } from "./config.js";
-import { MiniTriangleRenderer } from "./MiniTriangleRenderer.js";
+import { CONFIG } from "../config";
+import type { ColorScores, MiniRenderers, IScoreManager } from "../types";
+import { MiniTriangleRenderer } from "./MiniTriangleRenderer";
 
 /**
  * Score manager class
- * Handles 3D score text and HTML overlay
+ * Handles scoring system with per-color tracking and 3D mini-triangles in UI
  */
-export class ScoreManager {
-    constructor(scene) {
+export class ScoreManager implements IScoreManager {
+    private scene: THREE.Scene;
+    private score: number;
+    private colorScores: ColorScores;
+    private miniRenderers: MiniRenderers;
+    private textMesh: THREE.Mesh<TextGeometry, THREE.MeshBasicMaterial> | null;
+    private font: Font | null;
+    private scoreValueEl: HTMLElement | null;
+    private colorScoresEl: HTMLElement | null;
+
+    constructor(scene: THREE.Scene) {
         this.scene = scene;
         this.score = 0;
-        this.colorScores = {}; // { 0xff0000: 5, 0x00ff00: 3, ... }
-        this.miniRenderers = {}; // { 0xff0000: MiniTriangleRenderer, ... }
+        this.colorScores = {};
+        this.miniRenderers = {};
         this.textMesh = null;
         this.font = null;
         this.scoreValueEl = document.getElementById("score-value");
@@ -31,7 +41,7 @@ export class ScoreManager {
     /**
      * Load font for 3D text
      */
-    loadFont() {
+    private loadFont(): void {
         const fontLoader = new FontLoader();
         fontLoader.load(CONFIG.SCORE_TEXT.FONT_URL, (loadedFont) => {
             this.font = loadedFont;
@@ -42,28 +52,27 @@ export class ScoreManager {
 
     /**
      * Increment score by 1
-     * @param {number} color - Hex color of clicked triangle
+     * @param color - Hex color of clicked triangle
      */
-    increment(color = null) {
+    increment(color: number): void {
         this.score++;
 
         // Increment color-specific score
-        if (color !== null) {
-            if (this.colorScores[color] === undefined) {
-                this.colorScores[color] = 0;
-            }
-            this.colorScores[color]++;
-            this.updateColorScoresDisplay(color);
+        if (this.colorScores[color] === undefined) {
+            this.colorScores[color] = 0;
         }
+        this.colorScores[color]++;
+        this.updateColorScoresDisplay(color);
 
         this.updateText();
         this.updateOverlay();
     }
+
     /**
      * Update color scores display in UI
-     * @param {number} flashColor - Color to flash (optional)
+     * @param flashColor - Color to flash (optional)
      */
-    updateColorScoresDisplay(flashColor = null) {
+    private updateColorScoresDisplay(flashColor?: number): void {
         if (!this.colorScoresEl) return;
 
         // Clear existing
@@ -102,13 +111,13 @@ export class ScoreManager {
             // Score value
             const value = document.createElement("span");
             value.className = "color-score-value";
-            value.textContent = count;
+            value.textContent = count.toString();
 
             item.appendChild(canvas);
             item.appendChild(value);
-            this.colorScoresEl.appendChild(item);
+            this.colorScoresEl?.appendChild(item);
 
-            if (flashColor !== null && colorInt === flashColor) {
+            if (flashColor !== undefined && colorInt === flashColor) {
                 item.classList.add("flash");
                 setTimeout(() => item.classList.remove("flash"), 200);
             }
@@ -117,25 +126,25 @@ export class ScoreManager {
 
     /**
      * Get current score
-     * @returns {number}
+     * @returns Total score
      */
-    getScore() {
+    getScore(): number {
         return this.score;
     }
 
     /**
      * Get score for specific color
-     * @param {number} color - Hex color
-     * @returns {number}
+     * @param color - Hex color
+     * @returns Score for that color
      */
-    getColorScore(color) {
+    getColorScore(color: number): number {
         return this.colorScores[color] || 0;
     }
 
     /**
-     * Create 3D score text
+     * Create 3D score text (currently unused but kept for future)
      */
-    createText() {
+    private createText(): void {
         if (!this.font) return;
 
         const { SIZE, HEIGHT, COLOR, POSITION } = CONFIG.SCORE_TEXT;
@@ -143,7 +152,7 @@ export class ScoreManager {
         const geometry = new TextGeometry(`SCORE: ${this.score}`, {
             font: this.font,
             size: SIZE,
-            height: HEIGHT,
+            depth: HEIGHT,
         });
 
         const material = new THREE.MeshBasicMaterial({ color: COLOR });
@@ -154,9 +163,9 @@ export class ScoreManager {
     }
 
     /**
-     * Update 3D text
+     * Update 3D text (currently unused)
      */
-    updateText() {
+    private updateText(): void {
         if (this.textMesh) {
             this.scene.remove(this.textMesh);
         }
@@ -166,18 +175,19 @@ export class ScoreManager {
     /**
      * Update HTML overlay (total score)
      */
-    updateOverlay() {
+    private updateOverlay(): void {
         if (this.scoreValueEl) {
-            this.scoreValueEl.textContent = this.score;
+            this.scoreValueEl.textContent = this.score.toString();
         }
     }
 
     /**
      * Reset all scores
      */
-    reset() {
+    reset(): void {
         this.score = 0;
-        Object.keys(this.colorScores).forEach((color) => {
+        Object.keys(this.colorScores).forEach((colorKey) => {
+            const color = parseInt(colorKey);
             this.colorScores[color] = 0;
         });
 

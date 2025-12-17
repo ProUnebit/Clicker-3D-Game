@@ -1,19 +1,20 @@
 import * as THREE from "three";
-import { CONFIG } from "./config.js";
+import { CONFIG } from "../config";
+import type { FireflyMesh } from "../types";
 import {
     getRandomColor,
     getRandomPosition,
     getRandomVelocity,
     bounceOffBounds,
-} from "./utils.js";
+} from "./utils";
 
 /**
  * Initialize fireflies in the scene
- * @param {THREE.Scene} scene
- * @returns {THREE.Mesh[]} Array of firefly meshes
+ * @param scene - Scene to add fireflies to
+ * @returns Array of firefly meshes
  */
-export function initFireflies(scene) {
-    const fireflies = [];
+export function initFireflies(scene: THREE.Scene): FireflyMesh[] {
+    const fireflies: FireflyMesh[] = [];
     const {
         COUNT,
         SIZE,
@@ -42,7 +43,7 @@ export function initFireflies(scene) {
             clearcoatRoughness: MATERIAL.CLEARCOAT_ROUGHNESS,
         });
 
-        const firefly = new THREE.Mesh(geometry, material);
+        const firefly = new THREE.Mesh(geometry, material) as FireflyMesh;
         firefly.position.copy(getRandomPosition());
 
         firefly.userData = {
@@ -59,10 +60,10 @@ export function initFireflies(scene) {
 }
 
 /**
- * Animate all fireflies
- * @param {THREE.Mesh[]} fireflies
+ * Animate all fireflies (movement and pulsing effect)
+ * @param fireflies - Array of firefly meshes to animate
  */
-export function animateFireflies(fireflies) {
+export function animateFireflies(fireflies: FireflyMesh[]): void {
     const { EMISSIVE_MAX, EMISSIVE_MIN } = CONFIG.FIREFLIES;
 
     fireflies.forEach((firefly) => {

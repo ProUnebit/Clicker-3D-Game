@@ -1,21 +1,26 @@
 import * as THREE from "three";
-import { CONFIG } from "./config.js";
+import { CONFIG } from "../config";
+import type { ParticleMesh } from "../types";
 
 /**
  * Particle system manager
+ * Handles creation and animation of particle explosions
  */
 export class ParticleSystem {
-    constructor(scene) {
+    private scene: THREE.Scene;
+    private particles: ParticleMesh[];
+
+    constructor(scene: THREE.Scene) {
         this.scene = scene;
         this.particles = [];
     }
 
     /**
      * Create particle explosion at position
-     * @param {THREE.Vector3} position - Origin position
-     * @param {number} color - Particle color (hex)
+     * @param position - Origin position
+     * @param color - Particle color (hex)
      */
-    createExplosion(position, color) {
+    createExplosion(position: THREE.Vector3, color: number): void {
         const { COUNT_PER_CLICK, SIZE, INITIAL_SPEED, SPREAD_ANGLE } =
             CONFIG.PARTICLES;
 
@@ -38,7 +43,7 @@ export class ParticleSystem {
                 opacity: 1.0,
             });
 
-            const particle = new THREE.Mesh(geometry, material);
+            const particle = new THREE.Mesh(geometry, material) as ParticleMesh;
             particle.position.copy(position);
 
             // Store particle metadata
@@ -56,10 +61,10 @@ export class ParticleSystem {
     /**
      * Update all particles (call in animation loop)
      */
-    update() {
+    update(): void {
         const { GRAVITY, LIFETIME, FADE_START } = CONFIG.PARTICLES;
         const now = performance.now();
-        const particlesToRemove = [];
+        const particlesToRemove: number[] = [];
 
         this.particles.forEach((particle, index) => {
             const age = now - particle.userData.createdAt;
@@ -90,7 +95,7 @@ export class ParticleSystem {
             particle.scale.set(scale, scale, scale);
         });
 
-        // Remove expired particles
+        // Remove expired particles (backwards to avoid index issues)
         for (let i = particlesToRemove.length - 1; i >= 0; i--) {
             const index = particlesToRemove[i];
             const particle = this.particles[index];
@@ -105,16 +110,16 @@ export class ParticleSystem {
 
     /**
      * Get current particle count (for debugging)
-     * @returns {number}
+     * @returns Number of active particles
      */
-    getParticleCount() {
+    getParticleCount(): number {
         return this.particles.length;
     }
 
     /**
      * Clear all particles
      */
-    clear() {
+    clear(): void {
         this.particles.forEach((particle) => {
             this.scene.remove(particle);
             particle.geometry.dispose();

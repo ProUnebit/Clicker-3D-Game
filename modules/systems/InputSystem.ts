@@ -1,30 +1,41 @@
 import * as THREE from "three";
-import { CONFIG } from "../config.js";
-import { divideTriangle } from "../triangles.js";
+import { CONFIG } from "../../config";
+import type { TriangleMesh, InputSystemConfig } from "../../types";
+import { divideTriangle } from "../triangles";
 
 /**
  * InputSystem - Manages all user input (mouse, keyboard, touch)
+ * Handles raycasting, click detection, and hover effects
  */
 export class InputSystem {
-    constructor({
-        triangles,
-        scoreManager,
-        particleSystem,
-        scene,
-        camera,
-        renderSystem,
-    }) {
-        this.triangles = triangles;
-        this.scoreManager = scoreManager;
-        this.particleSystem = particleSystem;
-        this.scene = scene;
-        this.camera = camera;
-        this.renderSystem = renderSystem;
+    private triangles: TriangleMesh[];
+    private scoreManager: InputSystemConfig["scoreManager"];
+    private particleSystem: InputSystemConfig["particleSystem"];
+    private scene: THREE.Scene;
+    private camera: THREE.Camera;
+    private renderSystem: InputSystemConfig["renderSystem"];
+
+    private raycaster: THREE.Raycaster;
+    private pointer: THREE.Vector2;
+    private instructionsEl: HTMLElement | null;
+
+    private boundHandleResize: () => void;
+    private boundHandlePointerMove: (event: PointerEvent) => void;
+    private boundHandlePointerDown: (event: PointerEvent) => void;
+
+    constructor(config: InputSystemConfig) {
+        this.triangles = config.triangles;
+        this.scoreManager = config.scoreManager;
+        this.particleSystem = config.particleSystem;
+        this.scene = config.scene;
+        this.camera = config.camera;
+        this.renderSystem = config.renderSystem;
 
         this.raycaster = new THREE.Raycaster();
         this.pointer = new THREE.Vector2();
         this.instructionsEl = document.getElementById("instructions");
 
+        // Bind event handlers
         this.boundHandleResize = this.handleResize.bind(this);
         this.boundHandlePointerMove = this.handlePointerMove.bind(this);
         this.boundHandlePointerDown = this.handlePointerDown.bind(this);
@@ -33,7 +44,7 @@ export class InputSystem {
     /**
      * Initialize event listeners
      */
-    initialize() {
+    initialize(): void {
         window.addEventListener("resize", this.boundHandleResize);
         window.addEventListener("pointermove", this.boundHandlePointerMove);
         window.addEventListener("pointerdown", this.boundHandlePointerDown);
@@ -41,8 +52,9 @@ export class InputSystem {
 
     /**
      * Set pointer coordinates from event
+     * @param event - Pointer event
      */
-    setPointerFromEvent(event) {
+    private setPointerFromEvent(event: PointerEvent): void {
         this.pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
         this.pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
         this.raycaster.setFromCamera(this.pointer, this.camera);
@@ -50,14 +62,17 @@ export class InputSystem {
 
     /**
      * Handle mouse/touch move
+     * @param event - Pointer move event
      */
-    handlePointerMove(event) {
+    private handlePointerMove(event: PointerEvent): void {
         this.setPointerFromEvent(event);
-        const intersects = this.raycaster.intersectObjects(this.triangles);
+        const intersects = this.raycaster.intersectObjects(
+            this.triangles as THREE.Object3D[]
+        );
 
         if (intersects.length > 0) {
             intersects.forEach((intersect) => {
-                const triangle = intersect.object;
+                const triangle = intersect.object as TriangleMesh;
 
                 // Skip if already flashing
                 if (triangle.userData.isFlashing) return;
@@ -83,13 +98,16 @@ export class InputSystem {
 
     /**
      * Handle click/tap
+     * @param event - Pointer down event
      */
-    handlePointerDown(event) {
+    private handlePointerDown(event: PointerEvent): void {
         this.setPointerFromEvent(event);
-        const intersects = this.raycaster.intersectObjects(this.triangles);
+        const intersects = this.raycaster.intersectObjects(
+            this.triangles as THREE.Object3D[]
+        );
 
         if (intersects.length > 0) {
-            const triangle = intersects[0].object;
+            const triangle = intersects[0].object as TriangleMesh;
 
             // Get triangle color
             const triangleColor = triangle.material.color.getHex();
@@ -124,7 +142,7 @@ export class InputSystem {
             if (this.instructionsEl) {
                 this.instructionsEl.classList.add("acknowledged");
                 setTimeout(() => {
-                    this.instructionsEl.classList.remove("acknowledged");
+                    this.instructionsEl?.classList.remove("acknowledged");
                 }, CONFIG.UI.INSTRUCTIONS_FLASH_DURATION);
             }
         }
@@ -133,21 +151,22 @@ export class InputSystem {
     /**
      * Handle window resize
      */
-    handleResize() {
+    private handleResize(): void {
         this.renderSystem.handleResize();
     }
 
     /**
-     * Update triangles reference (for when triangles array changes)
+     * Update triangles reference (for when triangles array changes due to division)
+     * @param triangles - New triangles array
      */
-    setTriangles(triangles) {
+    setTriangles(triangles: TriangleMesh[]): void {
         this.triangles = triangles;
     }
 
     /**
-     * Cleanup
+     * Cleanup event listeners
      */
-    dispose() {
+    dispose(): void {
         window.removeEventListener("resize", this.boundHandleResize);
         window.removeEventListener("pointermove", this.boundHandlePointerMove);
         window.removeEventListener("pointerdown", this.boundHandlePointerDown);

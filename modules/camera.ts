@@ -1,12 +1,12 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { CONFIG } from "./config.js";
+import { CONFIG } from "../config";
 
 /**
- * Initialize camera
- * @returns {THREE.PerspectiveCamera}
+ * Initialize perspective camera
+ * @returns Configured THREE.PerspectiveCamera
  */
-export function initCamera() {
+export function initCamera(): THREE.PerspectiveCamera {
     const { FOV, NEAR, FAR, POSITION } = CONFIG.CAMERA;
 
     const camera = new THREE.PerspectiveCamera(
@@ -22,12 +22,15 @@ export function initCamera() {
 }
 
 /**
- * Initialize orbit controls
- * @param {THREE.Camera} camera
- * @param {HTMLElement} domElement
- * @returns {OrbitControls}
+ * Initialize orbit controls for camera
+ * @param camera - Camera to control
+ * @param domElement - DOM element to attach controls to
+ * @returns Configured OrbitControls
  */
-export function initControls(camera, domElement) {
+export function initControls(
+    camera: THREE.Camera,
+    domElement: HTMLElement
+): OrbitControls {
     const { DAMPING_FACTOR, MIN_DISTANCE, MAX_DISTANCE, ENABLE_PAN } =
         CONFIG.CONTROLS;
 

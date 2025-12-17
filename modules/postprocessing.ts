@@ -6,16 +6,28 @@ import { FXAAShader } from "three/addons/shaders/FXAAShader.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { HorizontalBlurShader } from "three/addons/shaders/HorizontalBlurShader.js";
 import { VerticalBlurShader } from "three/addons/shaders/VerticalBlurShader.js";
-import { CONFIG } from "./config.js";
+import { CONFIG } from "../config";
+
+/**
+ * Post-processing result type
+ */
+export interface PostProcessingResult {
+    composer: EffectComposer;
+    fxaaPass: ShaderPass;
+}
 
 /**
  * Initialize effect composer with post-processing passes
- * @param {THREE.WebGLRenderer} renderer
- * @param {THREE.Scene} scene
- * @param {THREE.Camera} camera
- * @returns {{ composer: EffectComposer, fxaaPass: ShaderPass }}
+ * @param renderer - WebGL renderer
+ * @param scene - Scene to render
+ * @param camera - Camera for rendering
+ * @returns Object containing composer and fxaaPass
  */
-export function initPostProcessing(renderer, scene, camera) {
+export function initPostProcessing(
+    renderer: THREE.WebGLRenderer,
+    scene: THREE.Scene,
+    camera: THREE.Camera
+): PostProcessingResult {
     const composer = new EffectComposer(renderer);
 
     // Render pass

@@ -1,17 +1,34 @@
 import * as THREE from "three";
-import { CONFIG } from "./config.js";
+import { CONFIG } from "../config";
 
 /**
  * MiniTriangleRenderer - Renders small 3D triangles for color indicators
+ * Creates a separate mini Three.js scene for UI display
  */
 export class MiniTriangleRenderer {
-    constructor(color, size = 32) {
+    private color: number;
+    private size: number;
+    private canvas: HTMLCanvasElement;
+    private scene: THREE.Scene;
+    private camera: THREE.PerspectiveCamera;
+    private renderer: THREE.WebGLRenderer;
+    private triangle: THREE.Mesh<
+        THREE.ExtrudeGeometry,
+        THREE.MeshPhysicalMaterial
+    > | null;
+    private animationId: number | null;
+
+    constructor(color: number, size: number = 32) {
         this.color = color;
         this.size = size;
-        this.canvas = null;
-        this.scene = null;
-        this.camera = null;
-        this.renderer = null;
+        this.canvas = document.createElement("canvas");
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: this.canvas,
+            alpha: true,
+            antialias: true,
+        });
         this.triangle = null;
         this.animationId = null;
 
@@ -21,35 +38,25 @@ export class MiniTriangleRenderer {
     /**
      * Initialize mini scene
      */
-    initialize() {
-        // Create canvas
-        this.canvas = document.createElement("canvas");
+    private initialize(): void {
+        // Configure canvas
         this.canvas.width = this.size;
         this.canvas.height = this.size;
         this.canvas.style.width = `${this.size}px`;
         this.canvas.style.height = `${this.size}px`;
         this.canvas.style.display = "block";
 
-        // Create scene
-        this.scene = new THREE.Scene();
-
-        // Create camera
-        this.camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+        // Configure camera
         this.camera.position.set(0, 0, 3);
 
-        // Create renderer
-        this.renderer = new THREE.WebGLRenderer({
-            canvas: this.canvas,
-            alpha: true,
-            antialias: true,
-        });
+        // Configure renderer
         this.renderer.setSize(this.size, this.size);
         this.renderer.setClearColor(0x000000, 0); // Transparent background
 
-        // Create triangle (same geometry as game triangles)
+        // Create triangle
         this.createTriangle();
 
-        // Add light
+        // Add lights
         const light = new THREE.DirectionalLight(0xffffff, 1);
         light.position.set(1, 1, 1);
         this.scene.add(light);
@@ -62,9 +69,9 @@ export class MiniTriangleRenderer {
     }
 
     /**
-     * Create triangle mesh (exact copy from game)
+     * Create triangle mesh (same as game triangles)
      */
-    createTriangle() {
+    private createTriangle(): void {
         const {
             EXTRUDE_DEPTH,
             BEVEL_THICKNESS,
@@ -109,8 +116,8 @@ export class MiniTriangleRenderer {
     /**
      * Animation loop
      */
-    animate() {
-        this.animationId = requestAnimationFrame(() => this.animate());
+    private animate = (): void => {
+        this.animationId = requestAnimationFrame(this.animate);
 
         // Slow rotation
         if (this.triangle) {
@@ -118,21 +125,23 @@ export class MiniTriangleRenderer {
         }
 
         this.renderer.render(this.scene, this.camera);
-    }
+    };
 
     /**
-     * Get canvas element
+     * Get canvas element for insertion into DOM
+     * @returns Canvas element
      */
-    getCanvas() {
+    getCanvas(): HTMLCanvasElement {
         return this.canvas;
     }
 
     /**
-     * Cleanup
+     * Cleanup resources
      */
-    dispose() {
-        if (this.animationId) {
+    dispose(): void {
+        if (this.animationId !== null) {
             cancelAnimationFrame(this.animationId);
+            this.animationId = null;
         }
 
         if (this.triangle) {
@@ -140,11 +149,9 @@ export class MiniTriangleRenderer {
             this.triangle.material.dispose();
         }
 
-        if (this.renderer) {
-            this.renderer.dispose();
-        }
+        this.renderer.dispose();
 
-        if (this.canvas) {
+        if (this.canvas.parentNode) {
             this.canvas.remove();
         }
     }
